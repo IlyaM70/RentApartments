@@ -5,8 +5,8 @@ namespace RentApartmentsAPI.Data
     public static class ApartmnetStore
     {
         public static List<ApartmentDTO> apartmentList = new List<ApartmentDTO>() {
-            new ApartmentDTO{Id=1, Name= "Ocean View"},
-            new ApartmentDTO{Id=2, Name = "River Side"}
+            new ApartmentDTO{Id=1, Name= "Ocean View", Sqft=100,Occupancy=4},
+            new ApartmentDTO{Id=2, Name = "River Side", Sqft=100,Occupancy=3}
         };
     }
 }

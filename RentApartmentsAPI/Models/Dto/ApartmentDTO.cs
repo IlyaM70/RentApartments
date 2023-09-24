@@ -1,8 +1,14 @@
-﻿namespace RentApartmentsAPI.Models.Dto
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace RentApartmentsAPI.Models.Dto
 {
     public class ApartmentDTO
     {
         public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        [Required]
+        [MaxLength(30)]
+        public string Name { get; set; }
+        public int Occupancy { get; set; }
+        public int Sqft { get; set; }
     }
 }
