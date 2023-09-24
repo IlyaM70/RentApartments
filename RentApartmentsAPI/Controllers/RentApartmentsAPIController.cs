@@ -11,6 +11,10 @@ namespace RentApartmentsAPI.Controllers
     [ApiController]
     public class RentApartmentsAPIController : ControllerBase
     {
+        public RentApartmentsAPIController()
+        {
+        }
+
         [HttpGet]
         public ActionResult<IEnumerable<ApartmentDTO>> GetApartments()
         {
@@ -26,7 +30,7 @@ namespace RentApartmentsAPI.Controllers
         {
             if (id == 0)
             {
-                return BadRequest();
+               return BadRequest();
             }
 
             var apartment = ApartmnetStore.apartmentList.FirstOrDefault(x => x.Id == id);
