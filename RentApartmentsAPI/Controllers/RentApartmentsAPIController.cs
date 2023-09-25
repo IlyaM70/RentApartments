@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using RentApartmentsAPI.Data;
 using RentApartmentsAPI.Models;
 using RentApartmentsAPI.Models.Dto;
@@ -11,14 +12,17 @@ namespace RentApartmentsAPI.Controllers
     [ApiController]
     public class RentApartmentsAPIController : ControllerBase
     {
-        public RentApartmentsAPIController()
+        private readonly AppDbContext _db;
+
+        public RentApartmentsAPIController(AppDbContext db)
         {
+            _db = db;
         }
 
         [HttpGet]
         public ActionResult<IEnumerable<ApartmentDTO>> GetApartments()
         {
-            return Ok(ApartmnetStore.apartmentList);
+            return Ok(_db.Apartments.ToList());
         }
 
         [HttpGet("{id:int}", Name = "GetApartment")]
@@ -33,7 +37,7 @@ namespace RentApartmentsAPI.Controllers
                return BadRequest();
             }
 
-            var apartment = ApartmnetStore.apartmentList.FirstOrDefault(x => x.Id == id);
+            var apartment = _db.Apartments.FirstOrDefault(x => x.Id == id);
             if (apartment == null)
             {
                 return NotFound();
@@ -54,7 +58,7 @@ namespace RentApartmentsAPI.Controllers
             //}
 
             //check if name unique
-            if (ApartmnetStore.apartmentList
+            if (_db.Apartments
                 .FirstOrDefault(x => x.Name.ToLower() == apartmentDTO.Name.ToLower()) != null)
             {
                 ModelState.AddModelError("NameNotUnique", "Apartment already exist!");
@@ -70,9 +74,21 @@ namespace RentApartmentsAPI.Controllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
-            apartmentDTO.Id =
-                ApartmnetStore.apartmentList.OrderByDescending(x=>x.Id).FirstOrDefault().Id + 1;
-            ApartmnetStore.apartmentList.Add(apartmentDTO);
+
+            Apartment apartment = new()
+            {
+                Id = apartmentDTO.Id,
+                Name = apartmentDTO.Name,
+                Occupancy = apartmentDTO.Occupancy,
+                ImageUrl = apartmentDTO.ImageUrl,
+                Rate = apartmentDTO.Rate,
+                Sqft = apartmentDTO.Sqft,
+                Description = apartmentDTO.Description,
+                Amenity = apartmentDTO.Amenity,
+            };
+
+            _db.Apartments.Add(apartment);
+            _db.SaveChanges();
 
             return CreatedAtRoute("GetApartment",new {id=apartmentDTO.Id}, apartmentDTO);
         }
@@ -87,12 +103,13 @@ namespace RentApartmentsAPI.Controllers
             {
                 return BadRequest();
             }
-            var apartment = ApartmnetStore.apartmentList.FirstOrDefault(x => x.Id == id);
+            var apartment = _db.Apartments.FirstOrDefault(x => x.Id == id);
             if (apartment == null)
             {
                 return NotFound();
             }
-            ApartmnetStore.apartmentList.Remove(apartment);
+            _db.Apartments.Remove(apartment);
+            _db.SaveChanges();
             return NoContent();
         }
 
@@ -106,14 +123,21 @@ namespace RentApartmentsAPI.Controllers
             {
                 return BadRequest();
             }
-            var apartment = ApartmnetStore.apartmentList.FirstOrDefault(x => x.Id == id);
-            if (apartment == null)
+
+            Apartment apartment = new()
             {
-                return NotFound();
-            }
-            apartment.Name = apartmentDTO.Name;
-            apartment.Sqft = apartmentDTO.Sqft;
-            apartment.Occupancy = apartmentDTO.Occupancy;
+                Id = apartmentDTO.Id,
+                Name = apartmentDTO.Name,
+                Occupancy = apartmentDTO.Occupancy,
+                ImageUrl = apartmentDTO.ImageUrl,
+                Rate = apartmentDTO.Rate,
+                Sqft = apartmentDTO.Sqft,
+                Description = apartmentDTO.Description,
+                Amenity = apartmentDTO.Amenity,
+            };
+
+            _db.Apartments.Update(apartment);
+            _db.SaveChanges();
 
             return NoContent();
         }
@@ -129,17 +153,49 @@ namespace RentApartmentsAPI.Controllers
             {
                 return BadRequest();
             }
-            var apartment = ApartmnetStore.apartmentList.FirstOrDefault(x => x.Id == id);
+            var apartment = _db.Apartments.AsNoTracking().FirstOrDefault(x => x.Id == id);
             if (apartment == null)
             {
                 return NotFound();
             }
-            patchDTO.ApplyTo(apartment, ModelState);
+
+            ApartmentDTO apartmentDTO = new()
+            {
+                Id = apartment.Id,
+                Name = apartment.Name,
+                Occupancy = apartment.Occupancy,
+                ImageUrl = apartment.ImageUrl,
+                Rate = apartment.Rate,
+                Sqft = apartment.Sqft,
+                Description = apartment.Description,
+                Amenity = apartment.Amenity,
+            };
+
+
+
+
+            patchDTO.ApplyTo(apartmentDTO, ModelState);
 
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
+
+            Apartment apartmentToUpdate = new()
+            {
+                Id = apartmentDTO.Id,
+                Name = apartmentDTO.Name,
+                Occupancy = apartmentDTO.Occupancy,
+                ImageUrl = apartmentDTO.ImageUrl,
+                Rate = apartmentDTO.Rate,
+                Sqft = apartmentDTO.Sqft,
+                Description = apartmentDTO.Description,
+                Amenity = apartmentDTO.Amenity
+            };
+
+            _db.Apartments.Update(apartmentToUpdate);
+            _db.SaveChanges();
+
 
             return NoContent();
         }
