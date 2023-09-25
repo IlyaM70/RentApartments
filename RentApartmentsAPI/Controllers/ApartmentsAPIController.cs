@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.JsonPatch;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RentApartmentsAPI.Data;
@@ -8,21 +9,24 @@ using RentApartmentsAPI.Models.Dto;
 namespace RentApartmentsAPI.Controllers
 {
     //[Route("api/[controller]")]
-    [Route("api/RentApartmentsAPI")]
+    [Route("api/ApartmentsAPI")]
     [ApiController]
-    public class RentApartmentsAPIController : ControllerBase
+    public class ApartmentsAPIController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly IMapper _mapper;
 
-        public RentApartmentsAPIController(AppDbContext db)
+        public ApartmentsAPIController(AppDbContext db, IMapper mapper)
         {
             _db = db;
+            _mapper = mapper;
         }
 
         [HttpGet("GetApartments")]
         public async Task<ActionResult<IEnumerable<ApartmentDTO>>> GetApartments()
         {
-            return Ok(await _db.Apartments.ToListAsync());
+            IEnumerable<Apartment> apartmentList = await _db.Apartments.ToListAsync();
+            return Ok(_mapper.Map<List<ApartmentDTO>>(apartmentList));
         }
 
         [HttpGet("GetApartment/{id:int}", Name = "GetApartment")]
@@ -37,13 +41,13 @@ namespace RentApartmentsAPI.Controllers
                return BadRequest();
             }
 
-            var apartment = await _db.Apartments.FirstOrDefaultAsync(x => x.Id == id);
+            Apartment? apartment = await _db.Apartments.FirstOrDefaultAsync(x => x.Id == id);
             if (apartment == null)
             {
                 return NotFound();
             }
 
-            return Ok(apartment);
+            return Ok(_mapper.Map<ApartmentDTO>(apartment));
         }
 
         [HttpPost("CreateApartment")]
@@ -62,17 +66,7 @@ namespace RentApartmentsAPI.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError);
             }
 
-            Apartment apartment = new()
-            {
-                Id = apartmentDTO.Id,
-                Name = apartmentDTO.Name,
-                Occupancy = apartmentDTO.Occupancy,
-                ImageUrl = apartmentDTO.ImageUrl,
-                Rate = apartmentDTO.Rate,
-                Sqft = apartmentDTO.Sqft,
-                Description = apartmentDTO.Description,
-                Amenity = apartmentDTO.Amenity,
-            };
+            Apartment apartment = _mapper.Map<Apartment>(apartmentDTO);
 
             await _db.Apartments.AddAsync(apartment);
             await _db.SaveChangesAsync();
@@ -111,17 +105,7 @@ namespace RentApartmentsAPI.Controllers
                 return BadRequest();
             }
 
-            Apartment apartment = new()
-            {
-                Id = apartmentDTO.Id,
-                Name = apartmentDTO.Name,
-                Occupancy = apartmentDTO.Occupancy,
-                ImageUrl = apartmentDTO.ImageUrl,
-                Rate = apartmentDTO.Rate,
-                Sqft = apartmentDTO.Sqft,
-                Description = apartmentDTO.Description,
-                Amenity = apartmentDTO.Amenity,
-            };
+            Apartment apartment = _mapper.Map<Apartment>(apartmentDTO);
 
             _db.Apartments.Update(apartment);
             await _db.SaveChangesAsync();
@@ -147,19 +131,7 @@ namespace RentApartmentsAPI.Controllers
                 return NotFound();
             }
 
-            ApartmentDTO apartmentDTO = new()
-            {
-                Id = apartment.Id,
-                Name = apartment.Name,
-                Occupancy = apartment.Occupancy,
-                ImageUrl = apartment.ImageUrl,
-                Rate = apartment.Rate,
-                Sqft = apartment.Sqft,
-                Description = apartment.Description,
-                Amenity = apartment.Amenity,
-            };
-
-
+            ApartmentDTO apartmentDTO = _mapper.Map<ApartmentDTO>(apartment);
 
 
             patchDTO.ApplyTo(apartmentDTO, ModelState);
@@ -169,17 +141,7 @@ namespace RentApartmentsAPI.Controllers
                 return BadRequest(ModelState);
             }
 
-            Apartment apartmentToUpdate = new()
-            {
-                Id = apartmentDTO.Id,
-                Name = apartmentDTO.Name,
-                Occupancy = apartmentDTO.Occupancy,
-                ImageUrl = apartmentDTO.ImageUrl,
-                Rate = apartmentDTO.Rate,
-                Sqft = apartmentDTO.Sqft,
-                Description = apartmentDTO.Description,
-                Amenity = apartmentDTO.Amenity
-            };
+            Apartment apartmentToUpdate = _mapper.Map<Apartment>(apartmentDTO);
 
             _db.Apartments.Update(apartmentToUpdate);
             await _db.SaveChangesAsync();
