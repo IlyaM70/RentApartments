@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using RentApartmentsAPI.Data;
 using RentApartmentsAPI.Models;
 using RentApartmentsAPI.Models.Dto;
+using RentApartmentsAPI.Repositories.RepositoryInterfaces;
 
 namespace RentApartmentsAPI.Controllers
 {
@@ -13,10 +14,10 @@ namespace RentApartmentsAPI.Controllers
     [ApiController]
     public class ApartmentsAPIController : ControllerBase
     {
-        private readonly AppDbContext _db;
+        private readonly IApartmentRepository _db;
         private readonly IMapper _mapper;
 
-        public ApartmentsAPIController(AppDbContext db, IMapper mapper)
+        public ApartmentsAPIController(IApartmentRepository db, IMapper mapper)
         {
             _db = db;
             _mapper = mapper;
@@ -25,7 +26,7 @@ namespace RentApartmentsAPI.Controllers
         [HttpGet("GetApartments")]
         public async Task<ActionResult<IEnumerable<ApartmentDTO>>> GetApartments()
         {
-            IEnumerable<Apartment> apartmentList = await _db.Apartments.ToListAsync();
+            IEnumerable<Apartment> apartmentList = await _db.GetAllAsync();
             return Ok(_mapper.Map<List<ApartmentDTO>>(apartmentList));
         }
 
@@ -41,7 +42,7 @@ namespace RentApartmentsAPI.Controllers
                return BadRequest();
             }
 
-            Apartment? apartment = await _db.Apartments.FirstOrDefaultAsync(x => x.Id == id);
+            Apartment? apartment = await _db.GetAsync(x => x.Id == id);
             if (apartment == null)
             {
                 return NotFound();
@@ -68,8 +69,8 @@ namespace RentApartmentsAPI.Controllers
 
             Apartment apartment = _mapper.Map<Apartment>(apartmentDTO);
 
-            await _db.Apartments.AddAsync(apartment);
-            await _db.SaveChangesAsync();
+            await _db.CreateAsync(apartment);
+            await _db.SaveAsync();
 
             return CreatedAtRoute("GetApartment",new {id=apartmentDTO.Id}, apartmentDTO);
         }
@@ -84,13 +85,13 @@ namespace RentApartmentsAPI.Controllers
             {
                 return BadRequest();
             }
-            var apartment = await _db.Apartments.FirstOrDefaultAsync(x => x.Id == id);
+            Apartment? apartment = await _db.GetAsync(x => x.Id == id);
             if (apartment == null)
             {
                 return NotFound();
             }
-            _db.Apartments.Remove(apartment);
-            await _db.SaveChangesAsync();
+            await _db.RemoveAsync(apartment);
+            await _db.SaveAsync();
             return NoContent();
         }
 
@@ -107,8 +108,8 @@ namespace RentApartmentsAPI.Controllers
 
             Apartment apartment = _mapper.Map<Apartment>(apartmentDTO);
 
-            _db.Apartments.Update(apartment);
-            await _db.SaveChangesAsync();
+            await _db.UpdateAsync(apartment);
+            await _db.SaveAsync();
 
             return NoContent();
         }
@@ -124,8 +125,7 @@ namespace RentApartmentsAPI.Controllers
             {
                 return BadRequest();
             }
-            var apartment = await _db.Apartments.AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Id == id);
+            Apartment? apartment = await _db.GetAsync(x => x.Id == id,false);
             if (apartment == null)
             {
                 return NotFound();
@@ -143,8 +143,8 @@ namespace RentApartmentsAPI.Controllers
 
             Apartment apartmentToUpdate = _mapper.Map<Apartment>(apartmentDTO);
 
-            _db.Apartments.Update(apartmentToUpdate);
-            await _db.SaveChangesAsync();
+            await _db.UpdateAsync(apartmentToUpdate);
+            await _db.SaveAsync();
 
 
             return NoContent();

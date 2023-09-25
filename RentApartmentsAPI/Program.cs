@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using RentApartmentsAPI;
 using RentApartmentsAPI.Data;
+using RentApartmentsAPI.Repositories;
+using RentApartmentsAPI.Repositories.RepositoryInterfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,7 @@ builder.Services.AddDbContext<AppDbContext>(
     option => option.UseSqlServer(builder.Configuration.GetConnectionString("MsSqlConnection"))
     );
 builder.Services.AddAutoMapper(typeof(MappingConfig));
+builder.Services.AddScoped<IApartmentRepository, ApartmentRepository>();
 builder.Services.AddControllers()
     .AddNewtonsoftJson().AddXmlDataContractSerializerFormatters();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
